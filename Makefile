@@ -11,7 +11,8 @@ lib/%.js: src/%.iced
 
 $(BUILD_STAMP): \
 	lib/stream.js \
-        lib/cmd.js
+    lib/cmd.js \
+    lib/main.js
 	date > $@
 
 clean:

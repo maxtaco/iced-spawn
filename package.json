@@ -21,9 +21,11 @@
     "url": "https://github.com/maxtaco/iced-spawn/issues"
   },
   "dependencies" : {
-    "iced-error" : "~0.0.8"
   },
   "devDependencies" : {
-    "iced-coffee-script" : "~1.7.1"
+    "iced-error" : "~0.0.8",
+    "iced-coffee-script" : "~1.7.1",
+    "iced-test" :  "~0.0.10",
+    "minimist" : "~0.0.7"
   }
 }

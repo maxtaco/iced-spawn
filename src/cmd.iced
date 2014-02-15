@@ -53,6 +53,7 @@ exports.Engine = class Engine
   #---------------
 
   _got_exit : (status) ->
+    --@_n_out
     @_exit_code = status
     @proc = null
     @pid = -1
@@ -74,13 +75,13 @@ exports.Engine = class Engine
 
   #---------------
 
-  _can_finish : () -> @_err or (@_n_out <= 0 && @_exit_code?)
+  _can_finish : () -> @_err? or (@_n_out <= 0 && @_exit_code?)
 
   #---------------
 
   _maybe_call_callback : () ->
     if @_exit_cb? and @_can_finish()
-      ecb = @_exit_cb
+      cb = @_exit_cb
       @_exit_cb = null
       cb @_err, @_exit_code
 
