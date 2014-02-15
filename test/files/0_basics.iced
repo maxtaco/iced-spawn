@@ -1,5 +1,6 @@
 
-{run} = require '../../lib/main'
+{BufferInStream,run} = require '../../lib/main'
+
 
 exports.launch_true = (T,cb) ->
   await run { name : "true" }, defer err
@@ -24,3 +25,18 @@ exports.check_stdout = (T,cb) ->
   T.no_error err
   T.equal out.toString('utf8'), "hello world\n", "got the right output"
   cb()  
+
+exports.check_stdin_1 = (T, cb) ->
+  msg = "Now is the time for all good men to come to the aid of the party."
+  await run { name : "cat", stdin : msg }, defer err, out
+  T.no_error err
+  T.equal out.toString('utf8'), msg, "the same message came out as went in"
+  cb()
+
+exports.check_stdin_2 = (T, cb) ->
+  msg = "Now is the time for all good men to come to the aid of the party."
+  stream = new BufferInStream(new Buffer(msg, "utf8"))
+  await run { name : "cat", stdin : stream }, defer err, out
+  T.no_error err
+  T.equal out.toString('utf8'), msg, "the same message came out as went in"
+  cb()
