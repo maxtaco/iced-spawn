@@ -3,6 +3,10 @@
 
 #=================================
 
+CR = if process.platform is 'win32' then "\r" else ""
+
+#=================================
+
 suite = 
 
   #----------------
@@ -44,7 +48,7 @@ suite =
   check_stdout : (T,cb) ->
     await run { name : "echo", args : [ "hello", "world"] }, defer err, out
     T.no_error err
-    T.equal out.toString('utf8'), "hello world\n", "got the right output"
+    T.equal out.toString('utf8'), "hello world#{CR}\n", "got the right output"
     cb()  
 
   #----------------

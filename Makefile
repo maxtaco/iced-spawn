@@ -11,8 +11,8 @@ lib/%.js: src/%.iced
 
 $(BUILD_STAMP): \
 	lib/stream.js \
-    lib/cmd.js \
-    lib/main.js
+	lib/cmd.js \
+	lib/main.js
 	date > $@
 
 clean:
@@ -24,6 +24,7 @@ setup:
 	npm install -d
 
 test:
+	$(ICED) test/run.iced
 
 .PHONY: test setup
 

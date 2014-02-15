@@ -1,6 +1,6 @@
 {exec,spawn} = require 'child_process'
 stream = require './stream'
-os = require 'os'
+util = require 'util'
 
 ##=======================================================================
 
@@ -51,6 +51,8 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     @_exit_code = null
     @_err = null
     @_n_out = 0
+    @_win32 = (process.platform is 'win32')
+    @_close_status = null
 
   #---------------
 
@@ -58,12 +60,13 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     args = @args
     name = @name
     opts = @opts
-    if os.platform() is 'win32'
+    if @_win32
       args = [ "/s", "/c", '"' + [ name ].concat(args).join(" ") + '"' ]
       name = "cmd.exe"
+      # shallow copy to not mess with what's passed to us
       opts = util._extend({}, @opts)
-      opt.windowsVerbatimArguments = true
-    @proc = spawn name, args, @opts
+      opts.windowsVerbatimArguments = true
+    @proc = spawn name, args, opts
 
   #---------------
 
@@ -78,7 +81,18 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     @proc.stdout.on 'end', () => @_got_eof()
     @proc.stderr.on 'end', () => @_got_eof()
     @proc.on 'error', (err)   => @_got_error err
+
+    # On win32, we need this event to know if the command failed to launch
+    # in the first place.
+    if @_win32 
+      @proc.on 'close', (code) => @_got_close code
     @
+
+  #---------------
+
+  _got_close : (code) -> 
+    @_err = new Error("failed to launch process; guessing ENOENT")
+    @_err.errno = 'ENOENT'
 
   #---------------
 
