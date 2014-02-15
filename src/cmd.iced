@@ -1,7 +1,5 @@
 {spawn} = require 'child_process'
 stream = require './stream'
-{E} = require './err'
-{parse} = require('pgp-utils').userid
 os = require 'os'
 
 ##=======================================================================
@@ -103,7 +101,7 @@ exports.bufferify = bufferify = (x) ->
 ##=======================================================================
 
 exports.run = run = (inargs, cb) ->
-  {args, stdin, stdout, stderr, quiet, name, eklass} = inargs
+  {args, stdin, stdout, stderr, quiet, name, eklass, opts} = inargs
 
   if (b = bufferify stdin)?
     stdin = new stream.BufferInStream b
@@ -115,7 +113,7 @@ exports.run = run = (inargs, cb) ->
   else
     def_out = false
   err = null
-  await (new Engine { args, stdin, stdout, stderr, name }).run().wait defer err, rc
+  await (new Engine { args, stdin, stdout, stderr, name, opts}).run().wait defer err, rc
   if err and (rc isnt 0)
     eklass or= Error
     err = new eklass "exit code #{rc}"
