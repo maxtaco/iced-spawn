@@ -83,11 +83,6 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
   #---------------
 
   _got_close : (code) -> 
-    # On win32, we need this event to know if the command failed to launch
-    # in the first place.
-    if @_win32 and code? and code
-      @_err = new Error("failed to launch process; guessing ENOENT")
-      @_err.errno = 'ENOENT'
     @_closed = true
     @_maybe_call_callback()
 

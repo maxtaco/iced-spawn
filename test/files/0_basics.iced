@@ -3,7 +3,9 @@
 
 #=================================
 
+win32 = (process.platform is 'win32')
 CR = if process.platform is 'win32' then "\r" else ""
+posix = not(win32)
 
 #=================================
 
@@ -30,7 +32,8 @@ suite =
   launch_not_there_1 : (T,cb) ->
     await run { name : 'a_process_that_does_not_exist', quiet : true }, defer err
     T.assert err?, "error came back"
-    T.equal err?.errno, 'ENOENT', "the ENOENT came back"
+    if posix
+      T.equal err?.errno, 'ENOENT', "the ENOENT came back"
     cb()
 
   #----------------
@@ -39,7 +42,8 @@ suite =
     stderr = new BufferOutStream()
     await run { name : 'a_process_that_does_not_exist', stderr }, defer err
     T.assert err?, "error came back"
-    T.equal err?.errno, 'ENOENT', "the ENOENT came back"
+    if posix
+      T.equal err?.errno, 'ENOENT', "the ENOENT came back"
     T.assert stderr.data().length > 5, "we got some sort of error message back"
     cb()
 
