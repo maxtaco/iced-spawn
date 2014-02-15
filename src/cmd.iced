@@ -43,7 +43,7 @@ exports.Engine = class Engine
     @proc.stdout.pipe @stdout
     @proc.stderr.pipe @stderr
     @pid = @proc.pid
-    @_n_out = 3 # we need 3 exit events before we can exit
+    @_n_out = 2 # we need 3 exit events before we can exit
     @proc.on 'exit', (status) => @_got_exit status
     @proc.stdout.on 'end', () => @_got_eof()
     @proc.stderr.on 'end', () => @_got_eof()
@@ -53,7 +53,6 @@ exports.Engine = class Engine
   #---------------
 
   _got_exit : (status) ->
-    --@_n_out
     @_exit_code = status
     @proc = null
     @pid = -1
@@ -75,7 +74,7 @@ exports.Engine = class Engine
 
   #---------------
 
-  _can_finish : () -> @_err? or (@_n_out <= 0 && @_exit_code?)
+  _can_finish : () -> (@_err? or @_exit_code?) and @_n_out <= 0
 
   #---------------
 

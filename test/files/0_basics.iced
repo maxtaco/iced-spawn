@@ -1,5 +1,5 @@
 
-{BufferInStream,run} = require '../../lib/main'
+{BufferOutStream,BufferInStream,run} = require '../../lib/main'
 
 
 exports.launch_true = (T,cb) ->
@@ -14,10 +14,19 @@ exports.launch_false = (T, cb) ->
   T.assert (err.rc != 0), "...that wasn't 0"
   cb()
 
-exports.launch_not_there = (T,cb) ->
+exports.launch_not_there_1 = (T,cb) ->
   await run { name : 'a_process_that_does_not_exist', quiet : true }, defer err
   T.assert err?, "error came back"
   T.equal err?.errno, 'ENOENT', "the ENOENT came back"
+  cb()
+
+exports.launch_not_there_2 = (T,cb) ->
+  stderr = new BufferOutStream()
+  await run { name : 'a_process_that_does_not_exist', stderr }, defer err
+  T.assert err?, "error came back"
+  T.equal err?.errno, 'ENOENT', "the ENOENT came back"
+  errmsg = "execvp(): No such file or directory"
+  T.equal stderr.data().toString('utf8').indexOf(errmsg), 0, "found error message"
   cb()
 
 exports.check_stdout = (T,cb) ->
@@ -40,3 +49,4 @@ exports.check_stdin_2 = (T, cb) ->
   T.no_error err
   T.equal out.toString('utf8'), msg, "the same message came out as went in"
   cb()
+
