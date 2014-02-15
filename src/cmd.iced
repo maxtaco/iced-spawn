@@ -132,6 +132,8 @@ exports.ExecEngine = class ExecEngine extends BaseEngine
       @stdout.write stdout, defer()
       @stderr.write stderr, defer()
     @_err = err
+
+    # Please excuse the plentiful hacks here.
     if not @_err?
       @_exit_code = 0
     else if @_err? 
@@ -140,6 +142,7 @@ exports.ExecEngine = class ExecEngine extends BaseEngine
       else
         @_exit_code = @_err.code
         @_err = null
+        
     @_exec_called_back = true
     @_maybe_call_callback()
 
