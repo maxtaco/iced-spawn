@@ -19,5 +19,11 @@
   "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/maxtaco/iced-spawn/issues"
+  },
+  "dependencies" : {
+    "iced-error" : "~0.0.8"
+  },
+  "devDependencies" : {
+    "iced-coffee-script" : "~1.7.1"
   }
 }

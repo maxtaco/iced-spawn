@@ -2,6 +2,7 @@
 stream = require './stream'
 {E} = require './err'
 {parse} = require('pgp-utils').userid
+os = require 'os'
 
 ##=======================================================================
 
@@ -12,6 +13,8 @@ exports.set_log = set_log = (log) -> _log = log
 
 exports.Engine = class Engine
 
+  #---------------
+
   constructor : ({@args, @stdin, @stdout, @stderr, @name, @opts}) ->
 
     @stderr or= new stream.FnOutStream(_log)
@@ -21,35 +24,73 @@ exports.Engine = class Engine
 
     @_exit_code = null
     @_exit_cb = null
+    @_err = null
     @_n_out = 0
 
+  #---------------
+
+  _spawn : () ->
+    args = @args
+    name = @name
+    if os.platform() is 'windows'
+      args = [ name, "/c", "/s" ].concat args
+      name = "cmd"
+    @proc = spawn name, args, @opts
+
+  #---------------
+
   run : () ->
-    @proc = spawn @name, @args, @opts
+    @_spawn()
     @stdin.pipe @proc.stdin
     @proc.stdout.pipe @stdout
     @proc.stderr.pipe @stderr
     @pid = @proc.pid
     @_n_out = 3 # we need 3 exit events before we can exit
     @proc.on 'exit', (status) => @_got_exit status
-    @proc.stdout.on 'end', () => @_maybe_finish()
-    @proc.stderr.on 'end', () => @_maybe_finish()
+    @proc.stdout.on 'end', () => @_got_eof()
+    @proc.stderr.on 'end', () => @_got_eof()
+    @proc.on 'error', (err)   => @_got_error err
     @
+
+  #---------------
 
   _got_exit : (status) ->
     @_exit_code = status
     @proc = null
-    @_maybe_finish()
+    @pid = -1
+    @_maybe_call_callback()
 
-  _maybe_finish : () ->
-    if --@_n_out <= 0
-      if (ecb = @_exit_cb)?
-        @_exit_cb = null
-        ecb @_exit_code
-      @pid = -1
+  #---------------
+
+  _got_error : (err) ->
+    @_err = err
+    @proc = null
+    @pid = -1
+    @_maybe_call_callback()
+
+  #---------------
+
+  _got_eof : () ->
+    --@_n_out
+    @_maybe_call_callback()
+
+  #---------------
+
+  _can_finish : () -> @_err or (@_n_out <= 0 && @_exit_code?)
+
+  #---------------
+
+  _maybe_call_callback : () ->
+    if @_exit_cb? and @_can_finish()
+      ecb = @_exit_cb
+      @_exit_cb = null
+      cb @_err, @_exit_code
+
+  #---------------
 
   wait : (cb) ->
-    if (@_exit_code and @_n_out <= 0) then cb @_exit_code
-    else @_exit_cb = cb
+    @_exit_cb = cb
+    @_maybe_call_callback()
 
 ##=======================================================================
 
@@ -74,9 +115,9 @@ exports.run = run = (inargs, cb) ->
   else
     def_out = false
   err = null
-  await (new Engine { args, stdin, stdout, stderr, name }).run().wait defer rc
-  if rc isnt 0
-    eklass or= E.CmdError
+  await (new Engine { args, stdin, stdout, stderr, name }).run().wait defer err, rc
+  if err and (rc isnt 0)
+    eklass or= Error
     err = new eklass "exit code #{rc}"
     err.rc = rc
   out = if def_out? then stdout.data() else null
