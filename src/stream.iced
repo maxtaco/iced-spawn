@@ -10,7 +10,7 @@ exports.NullInStream = class NullInStream extends stream.Readable
 ##=======================================================================
 
 exports.NullOutStream = class NullOutStream extends stream.Writable
-  _write : (dat) -> true
+  _write : (dat, encoding, cb) -> cb()
 
 ##=======================================================================
 

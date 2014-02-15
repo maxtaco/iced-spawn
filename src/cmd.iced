@@ -1,27 +1,54 @@
-{spawn} = require 'child_process'
+{exec,spawn} = require 'child_process'
 stream = require './stream'
 os = require 'os'
 
 ##=======================================================================
 
 _log = (x) -> console.warn x.toString('utf8')
+_engine = null
 exports.set_log = set_log = (log) -> _log = log
+exports.set_default_engine = (e) -> _engine = e
+_quiet = null
+exports.set_default_quiet = (q) -> _quiet = q
 
 ##=======================================================================
 
-exports.Engine = class Engine
+class BaseEngine
 
   #---------------
 
   constructor : ({@args, @stdin, @stdout, @stderr, @name, @opts}) ->
-
     @stderr or= new stream.FnOutStream(_log)
     @stdin or= new stream.NullInStream()
     @stdout or= new stream.NullOutStream()
     @opts or= {}
+    @args or= []
+    @_exit_cb = null
+
+  #---------------
+
+  _maybe_call_callback : () ->
+    if @_exit_cb? and @_can_finish()
+      cb = @_exit_cb
+      @_exit_cb = null
+      cb @_err, @_exit_code
+
+  #---------------
+
+  wait : (cb) ->
+    @_exit_cb = cb
+    @_maybe_call_callback()
+
+##=======================================================================
+
+exports.SpawnEngine = class SpawnEngine extends BaseEngine
+
+  #---------------
+
+  constructor : ({args, stdin, stdout, stderr, name, opts}) ->
+    super { args, stdin, stdout, stderr, name, opts }
 
     @_exit_code = null
-    @_exit_cb = null
     @_err = null
     @_n_out = 0
 
@@ -30,9 +57,12 @@ exports.Engine = class Engine
   _spawn : () ->
     args = @args
     name = @name
-    if os.platform() is 'windows'
-      args = [ name, "/c", "/s" ].concat args
-      name = "cmd"
+    opts = @opts
+    if os.platform() is 'win32'
+      args = [ "/s", "/c", '"' + [ name ].concat(args).join(" ") + '"' ]
+      name = "cmd.exe"
+      opts = util._extend({}, @opts)
+      opt.windowsVerbatimArguments = true
     @proc = spawn name, args, @opts
 
   #---------------
@@ -76,19 +106,50 @@ exports.Engine = class Engine
 
   _can_finish : () -> (@_err? or @_exit_code?) and @_n_out <= 0
 
-  #---------------
 
-  _maybe_call_callback : () ->
-    if @_exit_cb? and @_can_finish()
-      cb = @_exit_cb
-      @_exit_cb = null
-      cb @_err, @_exit_code
+##=======================================================================
+
+exports.ExecEngine = class ExecEngine extends BaseEngine
 
   #---------------
 
-  wait : (cb) ->
-    @_exit_cb = cb
+  constructor : ({args, stdin, stdout, stderr, name, opts}) ->
+    super { args, stdin, stdout, stderr, name, opts }
+    @_exec_called_back = false
+
+  #---------------
+
+  run : () ->
+    argv = [@name].concat(@args).join(" ")
+    @proc = exec argv, @opts, (args...) => @_got_exec_cb args...
+    @stdin.pipe @proc.stdin
+    @
+
+  #---------------
+
+  _got_exec_cb : (err, stdout, stderr) ->
+    await 
+      @stdout.write stdout, defer()
+      @stderr.write stderr, defer()
+    @_err = err
+    if not @_err?
+      @_exit_code = 0
+    else if @_err? 
+      if @_err.code is 127
+        @_err.errno = 'ENOENT'
+      else
+        @_exit_code = @_err.code
+        @_err = null
+    @_exec_called_back = true
     @_maybe_call_callback()
+
+  #---------------
+
+  _can_finish : () -> @_exec_called_back
+
+##=======================================================================
+
+exports.Engine = SpawnEngine
 
 ##=======================================================================
 
@@ -101,11 +162,11 @@ exports.bufferify = bufferify = (x) ->
 ##=======================================================================
 
 exports.run = run = (inargs, cb) ->
-  {args, stdin, stdout, stderr, quiet, name, eklass, opts} = inargs
+  {args, stdin, stdout, stderr, quiet, name, eklass, opts, engklass} = inargs
 
   if (b = bufferify stdin)?
     stdin = new stream.BufferInStream b
-  if quiet
+  if (quiet or (_quiet? and _quiet)) and not stderr?
     stderr = new stream.NullOutStream()
   if not stdout?
     def_out = true
@@ -113,7 +174,8 @@ exports.run = run = (inargs, cb) ->
   else
     def_out = false
   err = null
-  await (new Engine { args, stdin, stdout, stderr, name, opts}).run().wait defer err, rc
+  engklass or= (_engine or SpawnEngine)
+  await (new engklass { args, stdin, stdout, stderr, name, opts}).run().wait defer err, rc
   if not err? and (rc isnt 0)
     eklass or= Error
     err = new eklass "exit code #{rc}"
