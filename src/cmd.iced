@@ -50,9 +50,8 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
 
     @_exit_code = null
     @_err = null
-    @_n_out = 0
     @_win32 = (process.platform is 'win32')
-    @_close_status = null
+    @_closed = false
 
   #---------------
 
@@ -76,23 +75,21 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     @proc.stdout.pipe @stdout
     @proc.stderr.pipe @stderr
     @pid = @proc.pid
-    @_n_out = 2 # we need 3 exit events before we can exit
     @proc.on 'exit', (status) => @_got_exit status
-    @proc.stdout.on 'end', () => @_got_eof()
-    @proc.stderr.on 'end', () => @_got_eof()
     @proc.on 'error', (err)   => @_got_error err
-
-    # On win32, we need this event to know if the command failed to launch
-    # in the first place.
-    if @_win32 
-      @proc.on 'close', (code) => @_got_close code
+    @proc.on 'close', (code)  => @_got_close code
     @
 
   #---------------
 
   _got_close : (code) -> 
-    @_err = new Error("failed to launch process; guessing ENOENT")
-    @_err.errno = 'ENOENT'
+    # On win32, we need this event to know if the command failed to launch
+    # in the first place.
+    if @_win32 and code? and code
+      @_err = new Error("failed to launch process; guessing ENOENT")
+      @_err.errno = 'ENOENT'
+    @_closed = true
+    @_maybe_call_callback()
 
   #---------------
 
@@ -112,13 +109,7 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
 
   #---------------
 
-  _got_eof : () ->
-    --@_n_out
-    @_maybe_call_callback()
-
-  #---------------
-
-  _can_finish : () -> (@_err? or @_exit_code?) and @_n_out <= 0
+  _can_finish : () -> (@_err? or @_exit_code?) and @_closed
 
 
 ##=======================================================================
