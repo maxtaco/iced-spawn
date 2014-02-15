@@ -115,7 +115,7 @@ exports.run = run = (inargs, cb) ->
     def_out = false
   err = null
   await (new Engine { args, stdin, stdout, stderr, name, opts}).run().wait defer err, rc
-  if err and (rc isnt 0)
+  if not err? and (rc isnt 0)
     eklass or= Error
     err = new eklass "exit code #{rc}"
     err.rc = rc
