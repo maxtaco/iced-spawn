@@ -1,0 +1,23 @@
+{
+  "name": "iced-spawn",
+  "version": "0.0.0",
+  "description": "Platform-independent spawning that works on Window and supports stream",
+  "main": "lib/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:maxtaco/iced-spawn"
+  },
+  "keywords": [
+    "spawn",
+    "windows",
+    "streams"
+  ],
+  "author": "Maxwell Krohn",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/maxtaco/iced-spawn/issues"
+  }
+}
