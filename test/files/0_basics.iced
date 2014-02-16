@@ -49,11 +49,22 @@ suite =
 
   #----------------
 
-  check_stdout : (T,cb) ->
+  check_stdout_1 : (T,cb) ->
     await run { name : "echo", args : [ "hello", "world"] }, defer err, out
     T.no_error err
     T.equal out.toString('utf8'), "hello world#{CR}\n", "got the right output"
     cb()  
+
+  #----------------
+
+  check_stdout_escaping_1 : (T,cb) ->
+    if use_exec
+      T.waypoint "skipped; won't work with exec"
+    else
+      await run { name : "echo", args : [ "<", "|" , ">" ] }, defer err, out
+      T.no_error err
+      T.equal out.toString('utf8'), "< | >#{CR}\n", "got all pieces back"
+    cb()
 
   #----------------
 
@@ -76,11 +87,13 @@ suite =
 
 #=================================
 
+use_exec = false
 for k,v of suite
   exports["spawn_" + k ] = v
 exports.change_to_exec = (T,cb) ->
   set_default_engine ExecEngine
   set_default_quiet true
+  use_exec = true
   cb()
 for k,v of suite
   exports["exec_" + k ] = v
