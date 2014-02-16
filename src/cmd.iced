@@ -41,6 +41,14 @@ class BaseEngine
 
 ##=======================================================================
 
+dos_cmd_escape = (cmd) ->
+  out = for c in cmd
+    if c.match /[&<>()@^|]/ then "^#{c}"
+    else c
+  out.join('')
+
+##=======================================================================
+
 exports.SpawnEngine = class SpawnEngine extends BaseEngine
 
   #---------------
@@ -60,7 +68,8 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     name = @name
     opts = @opts
     if @_win32
-      args = [ "/s", "/c", '"' + [ name ].concat(args).join(" ") + '"' ]
+      cmdline = dos_cmd_escape [ name ].concat(args).join(" ")
+      args = [ "/s", "/c", '"' + cmdline + '"' ]
       name = "cmd.exe"
       # shallow copy to not mess with what's passed to us
       opts = util._extend({}, @opts)
