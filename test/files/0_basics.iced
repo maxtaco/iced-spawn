@@ -68,6 +68,18 @@ suite =
 
   #----------------
 
+  check_stdout_escaping_2 : (T,cb) ->
+    if use_exec
+      T.waypoint "skipped; won't work with exec"
+    else
+      msg = "foo  bar   bam    bye"
+      await run { name : "echo", args : [ msg ] }, defer err, out
+      T.no_error err
+      T.equal out.toString('utf8'), (msg+EOL), "got all pieces back with correct spacing"
+    cb()
+
+  #----------------
+
   check_stdin_1 : (T, cb) ->
     msg = "Now is the time for all good men to come to the aid of the party."
     await run { name : "cat", stdin : msg }, defer err, out
