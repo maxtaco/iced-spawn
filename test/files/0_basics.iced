@@ -4,7 +4,7 @@
 #=================================
 
 win32 = (process.platform is 'win32')
-CR = if process.platform is 'win32' then "\r" else ""
+{EOL} = require('os')
 posix = not(win32)
 
 #=================================
@@ -52,7 +52,7 @@ suite =
   check_stdout_1 : (T,cb) ->
     await run { name : "echo", args : [ "hello", "world"] }, defer err, out
     T.no_error err
-    T.equal out.toString('utf8'), "hello world#{CR}\n", "got the right output"
+    T.equal out.toString('utf8'), "hello world#{EOL}", "got the right output"
     cb()  
 
   #----------------
@@ -63,7 +63,7 @@ suite =
     else
       await run { name : "echo", args : [ "<", "|" , ">" ] }, defer err, out
       T.no_error err
-      T.equal out.toString('utf8'), "< | >#{CR}\n", "got all pieces back"
+      T.equal out.toString('utf8'), "< | >#{EOL}", "got all pieces back"
     cb()
 
   #----------------
