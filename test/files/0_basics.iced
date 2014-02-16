@@ -72,10 +72,11 @@ suite =
     if use_exec
       T.waypoint "skipped; won't work with exec"
     else
-      msg = "foo  bar   bam    bye"
-      await run { name : "echo", args : [ msg ] }, defer err, out
+      msg1 = "foo  bar   bam    bye"
+      msg2 = "  x   y   z  "
+      await run { name : "echo", args : [ msg1, msg2 ] }, defer err, out
       T.no_error err
-      T.equal out.toString('utf8'), (msg+EOL), "got all pieces back with correct spacing"
+      T.equal out.toString('utf8'), (msg1+" "+msg2+EOL), "got all pieces back with correct spacing"
     cb()
 
   #----------------

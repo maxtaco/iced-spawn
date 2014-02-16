@@ -43,8 +43,7 @@ class BaseEngine
 
 dos_cmd_escape = (cmd) ->
   out = for c in cmd
-    if c.match /[&<>()@^|]/ then "^#{c}"
-    else if c is ' ' then "\\ "
+    if c.match /[&<>()@^| ]/ then "^#{c}"
     else c
   out.join('')
 
