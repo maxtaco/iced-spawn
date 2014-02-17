@@ -17,8 +17,8 @@ class BaseEngine
 
   #---------------
 
-  constructor : ({@args, @stdin, @stdout, @stderr, @name, @opts}) ->
-    @stderr or= new stream.FnOutStream(_log)
+  constructor : ({@args, @stdin, @stdout, @stderr, @name, @opts, @log}) ->
+    @stderr or= new stream.FnOutStream(@log or _log)
     @stdin or= new stream.NullInStream()
     @stdout or= new stream.NullOutStream()
     @opts or= {}
@@ -58,8 +58,8 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
 
   #---------------
 
-  constructor : ({args, stdin, stdout, stderr, name, opts}) ->
-    super { args, stdin, stdout, stderr, name, opts }
+  constructor : ({args, stdin, stdout, stderr, name, opts, log}) ->
+    super { args, stdin, stdout, stderr, name, opts, log }
 
     @_exit_code = null
     @_err = null
@@ -127,7 +127,7 @@ exports.ExecEngine = class ExecEngine extends BaseEngine
 
   #---------------
 
-  constructor : ({args, stdin, stdout, stderr, name, opts}) ->
+  constructor : ({args, stdin, stdout, stderr, name, opts, log}) ->
     super { args, stdin, stdout, stderr, name, opts }
     @_exec_called_back = false
 
@@ -179,7 +179,7 @@ exports.bufferify = bufferify = (x) ->
 ##=======================================================================
 
 exports.run = run = (inargs, cb) ->
-  {args, stdin, stdout, stderr, quiet, name, eklass, opts, engklass} = inargs
+  {args, stdin, stdout, stderr, quiet, name, eklass, opts, engklass, log} = inargs
 
   if (b = bufferify stdin)?
     stdin = new stream.BufferInStream b
@@ -192,7 +192,7 @@ exports.run = run = (inargs, cb) ->
     def_out = false
   err = null
   engklass or= (_engine or SpawnEngine)
-  await (new engklass { args, stdin, stdout, stderr, name, opts}).run().wait defer err, rc
+  await (new engklass { args, stdin, stdout, stderr, name, opts, log}).run().wait defer err, rc
   if not err? and (rc isnt 0)
     eklass or= Error
     err = new eklass "exit code #{rc}"
