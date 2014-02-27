@@ -1,6 +1,8 @@
 {exec,spawn} = require 'child_process'
 stream = require './stream'
 util = require 'util'
+semver = require 'semver'
+fs = require 'fs'
 
 ##=======================================================================
 
@@ -83,7 +85,36 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
 
   #---------------
 
-  run : () ->
+  _node_v0_10_workarounds : (cb) ->
+    unless process.stdin._handle?
+      await fs.fstat 0, defer err, stat
+      if err?
+        await fs.open process.execPath, "r", defer err, fd
+        if err?
+          console.error "Workaround for stdin bug failed: #{err.message}"
+        else if fd isnt 0
+          console.error "Workaround for stdin bug failed! Got #{fd} != 0"
+    cb()
+
+  #---------------
+
+  _node_workarounds : (cb) ->
+    if semver.lt(process.version, "v0.11.0")
+      await @_node_v0_10_workarounds defer()
+    cb()
+
+  #---------------
+
+  # For backwards compatibility, we should still return '@', so do the
+  # real work of running in a subcall.
+  run : (cb = null) ->
+    @_run cb
+    @ 
+
+  #---------------
+
+  _run : (cb) ->
+    await @_node_workarounds defer()
     @_spawn()
     @stdin.pipe @proc.stdin
     @proc.stdout.pipe @stdout
@@ -92,7 +123,7 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     @proc.on 'exit', (status) => @_got_exit status
     @proc.on 'error', (err)   => @_got_error err
     @proc.on 'close', (code)  => @_got_close code
-    @
+    cb? null
 
   #---------------
 
@@ -192,7 +223,9 @@ exports.run = run = (inargs, cb) ->
     def_out = false
   err = null
   engklass or= (_engine or SpawnEngine)
-  await (new engklass { args, stdin, stdout, stderr, name, opts, log}).run().wait defer err, rc
+  eng = new engklass { args, stdin, stdout, stderr, name, opts, log}
+  eng.run()
+  await eng.wait defer err, rc
   if not err? and (rc isnt 0)
     eklass or= Error
     err = new eklass "exit code #{rc}"

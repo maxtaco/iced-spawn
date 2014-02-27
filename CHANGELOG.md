@@ -1,3 +1,15 @@
+## v0.0.5 (2014-02-27)
+
+Bugfixes:
+	
+  - Workaround bugs in v0.10.x in which stdin was closed on EOF, and then future calls to spawn failed
+    because they were closing 0 due to a bug in libuv.  I submitted a PR to libuv, but they'd rather
+    workaround that bug in node, so the PR was rejected:
+
+       https://github.com/joyent/libuv/pull/1162
+
+    We're working around the issue by opening a dummy fd=0
+
 ## v0.0.4 (2014-02-17)
 
 Features:

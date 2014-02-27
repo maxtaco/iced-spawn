@@ -20,7 +20,9 @@
   "bugs": {
     "url": "https://github.com/maxtaco/iced-spawn/issues"
   },
-  "dependencies": {},
+  "dependencies": {
+    "semver" : "~2.2.1"
+  },
   "devDependencies": {
     "iced-error": "~0.0.8",
     "iced-coffee-script": "~1.7.1",
