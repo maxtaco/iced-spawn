@@ -6,7 +6,7 @@ fs = require 'fs'
 
 ##=======================================================================
 
-_log = (x) -> console.warn x.toString('utf8')
+_log = (x) -> process.stderr.write x.toString('utf8')
 _engine = null
 exports.set_log = set_log = (log) -> _log = log
 exports.set_default_engine = (e) -> _engine = e

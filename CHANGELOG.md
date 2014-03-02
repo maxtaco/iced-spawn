@@ -1,3 +1,9 @@
+## v0.0.6 (2014-03-1)
+
+Bugfixes:
+
+  - When quiet mode is off, no extra newline on each warning
+
 ## v0.0.5 (2014-02-27)
 
 Bugfixes:
