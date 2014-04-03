@@ -230,7 +230,7 @@ exports.run = run = (inargs, cb) ->
     eklass or= Error
     err = new eklass "exit code #{rc}"
     err.rc = rc
-  out = if def_out? then stdout.data() else null
+  out = if def_out then stdout.data() else null
   cb err, out
 
 ##=======================================================================

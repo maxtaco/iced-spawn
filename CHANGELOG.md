@@ -1,3 +1,9 @@
+## v0.0.7
+
+Bugfix:
+
+  - Small bugfix to default standard out
+
 ## v0.0.6 (2014-3-3)
 
 Bugfixes:
