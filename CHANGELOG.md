@@ -6,7 +6,7 @@ Bugfix:
 
 Features:
 
-  - Open other FDs in the child other than standard 0,1,2
+  - Open other FDs in the child other than standard 0,1,2. Sadly, doesn't work in Windows.
 
 ## v0.0.6 (2014-3-3)
 
