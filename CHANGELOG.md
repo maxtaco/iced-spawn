@@ -1,8 +1,12 @@
-## v0.0.7
+## v0.0.7 (2014-04-23)
 
 Bugfix:
 
   - Small bugfix to default standard out
+
+Features:
+
+  - Open other FDs in the child other than standard 0,1,2
 
 ## v0.0.6 (2014-3-3)
 

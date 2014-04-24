@@ -60,13 +60,28 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
 
   #---------------
 
-  constructor : ({args, stdin, stdout, stderr, name, opts, log}) ->
+  constructor : ({args, stdin, stdout, stderr, name, opts, log, @other_fds}) ->
     super { args, stdin, stdout, stderr, name, opts, log }
 
     @_exit_code = null
     @_err = null
     @_win32 = (process.platform is 'win32')
     @_closed = false
+    @_configure_other_fds()
+
+  #---------------
+
+  # We can specify FDS other that 0,1,2 via the other_fds option;
+  # we need to massage what we pass to spawn though to make this happen.
+  _configure_other_fds : () ->
+    if @other_fds?
+      max = 0
+      for k,v of @other_fds
+        if k > max then max = k
+      pipes = ('pipe' for [0..2])
+      for i in [3..max]
+        pipes.push (if @other_fds[i] then 'pipe' else null)
+      @opts.stdio = pipes
 
   #---------------
 
@@ -119,6 +134,12 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     @stdin.pipe @proc.stdin
     @proc.stdout.pipe @stdout
     @proc.stderr.pipe @stderr
+
+    if @other_fds?
+      for k,v of @other_fds
+        if v.is_readable() then v.pipe @proc.stdio[k]
+        else @proc.stdio[k].pipe v
+
     @pid = @proc.pid
     @proc.on 'exit', (status) => @_got_exit status
     @proc.on 'error', (err)   => @_got_error err
@@ -210,7 +231,7 @@ exports.bufferify = bufferify = (x) ->
 ##=======================================================================
 
 exports.run = run = (inargs, cb) ->
-  {args, stdin, stdout, stderr, quiet, name, eklass, opts, engklass, log} = inargs
+  {args, stdin, stdout, stderr, quiet, name, eklass, opts, engklass, log, other_fds} = inargs
 
   if (b = bufferify stdin)?
     stdin = new stream.BufferInStream b
@@ -223,7 +244,7 @@ exports.run = run = (inargs, cb) ->
     def_out = false
   err = null
   engklass or= (_engine or SpawnEngine)
-  eng = new engklass { args, stdin, stdout, stderr, name, opts, log}
+  eng = new engklass { args, stdin, stdout, stderr, name, opts, log, other_fds}
   eng.run()
   await eng.wait defer err, rc
   if not err? and (rc isnt 0)
