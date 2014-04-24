@@ -11,8 +11,9 @@ run_n = (n,T,cb) ->
   other_fds = {}
   ns = "" + n
   other_fds[ns] = new BufferOutStream()
-  name = path.join __dirname, "write_to_fd_n.js"
-  await run { name, other_fds , args : [ ns, msg ] }, defer err
+  name = process.execPath
+  helper = path.join __dirname, "write_to_fd_n.js"
+  await run { name, other_fds , args : [ helper, ns, msg ] }, defer err
   T.no_error err, "it worked without an error"
   T.equal other_fds[ns].data().toString('utf8'), msg, "got back the right data"
   cb()
