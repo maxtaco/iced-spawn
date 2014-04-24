@@ -1,4 +1,5 @@
 {set_default_quiet,ExecEngine,set_default_engine,SpawnEngine,BufferOutStream,BufferInStream,run} = require '../../lib/main'
+path = require 'path'
 
 exports.init = (T,cb) ->
   set_default_engine SpawnEngine
@@ -10,7 +11,8 @@ run_n = (n,T,cb) ->
   other_fds = {}
   ns = "" + n
   other_fds[ns] = new BufferOutStream()
-  await run { name : 'write_to_fd_n.js', other_fds , args : [ ns, msg ] }, defer err
+  name = path.join __dirname, "write_to_fd_n.js"
+  await run { name, other_fds , args : [ ns, msg ] }, defer err
   T.no_error err, "it worked without an error"
   T.equal other_fds[ns].data().toString('utf8'), msg, "got back the right data"
   cb()
