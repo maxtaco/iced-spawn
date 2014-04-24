@@ -1,3 +1,9 @@
+## v0.0.8
+
+Bugfixes:
+
+  - Force args into string on windows
+
 ## v0.0.7 (2014-04-23)
 
 Bugfix:
