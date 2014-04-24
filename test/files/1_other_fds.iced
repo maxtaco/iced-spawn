@@ -1,5 +1,6 @@
 {set_default_quiet,ExecEngine,set_default_engine,SpawnEngine,BufferOutStream,BufferInStream,run} = require '../../lib/main'
 path = require 'path'
+exports.skip = true if (process.platform is 'win32')
 
 exports.init = (T,cb) ->
   set_default_engine SpawnEngine

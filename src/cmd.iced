@@ -45,6 +45,7 @@ class BaseEngine
 
 dos_cmd_escape = (cmd) ->
   out = for c in cmd
+    c = "" + c # convert all integers to strings...
     if c.match /[&<>()@^| ]/ then "^#{c}"
     else c
   out.join('')
