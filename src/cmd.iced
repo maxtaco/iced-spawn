@@ -164,8 +164,6 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
   #---------------
 
   _got_error : (err) ->
-    console.log "got error"
-    console.log err
     @_err = err
     @proc = null
     @pid = -1
