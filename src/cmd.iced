@@ -102,7 +102,7 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
   #---------------
 
   _node_v0_10_workarounds : (cb) ->
-    unless process.stdin._handle?
+    if true #unless process.stdin._handle?
       await fs.fstat 0, defer err, stat
       if err?
         await fs.open process.execPath, "r", defer err, fd
@@ -164,6 +164,8 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
   #---------------
 
   _got_error : (err) ->
+    console.log "got error"
+    console.log err
     @_err = err
     @proc = null
     @pid = -1

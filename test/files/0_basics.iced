@@ -44,6 +44,7 @@ suite =
     T.assert err?, "error came back"
     if posix
       T.equal err?.errno, 'ENOENT', "the ENOENT came back"
+    console.log stderr.data()
     T.assert stderr.data().length > 5, "we got some sort of error message back"
     cb()
 
