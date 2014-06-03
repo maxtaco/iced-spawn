@@ -1,8 +1,10 @@
-## v0.0.8
+## v0.0.8 (2014-06-05)
 
 Bugfixes:
 
   - Force args into string on windows
+  - Upgrade to new ICS runtime
+  - signed.md 
 
 ## v0.0.7 (2014-04-23)
 
