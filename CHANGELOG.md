@@ -1,3 +1,9 @@
+## v0.0.10
+
+Bugfixes:
+  
+  - Comment out spammy warning...
+
 ## v0.0.9 (2014-06-04)
 
 Bugfixes:
