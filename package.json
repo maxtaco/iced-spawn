@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "iced-runtime": ">=0.0.1",
-    "semver": "~2.2.1"
+    "semver": ">=2.2.1"
   },
   "devDependencies": {
     "iced-error": ">=0.0.9",
