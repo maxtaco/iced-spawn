@@ -33,7 +33,7 @@ class BaseEngine
     if @_exit_cb? and @_can_finish()
       cb = @_exit_cb
       @_exit_cb = null
-      cb @_err, @_exit_code
+      cb @_err, @_exit_code, @_exit_signal
 
   #---------------
 
@@ -65,6 +65,7 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
     super { args, stdin, stdout, stderr, name, opts, log }
 
     @_exit_code = null
+    @_exit_signal = null
     @_err = null
     @_win32 = (process.platform is 'win32')
     @_closed = false
@@ -126,7 +127,7 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
   # real work of running in a subcall.
   run : (cb = null) ->
     @_run cb
-    @ 
+    @
 
   #---------------
 
@@ -143,21 +144,22 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
         else @proc.stdio[k].pipe v
 
     @pid = @proc.pid
-    @proc.on 'exit', (status) => @_got_exit status
-    @proc.on 'error', (err)   => @_got_error err
-    @proc.on 'close', (code)  => @_got_close code
-    cb? null
+    @proc.on 'exit',  (status, signal) => @_got_exit status, signal
+    @proc.on 'error', (err)            => @_got_error err
+    @proc.on 'close', (code)           => @_got_close code
+    cb? null, @
 
   #---------------
 
-  _got_close : (code) -> 
+  _got_close : (code) ->
     @_closed = true
     @_maybe_call_callback()
 
   #---------------
 
-  _got_exit : (status) ->
+  _got_exit : (status, signal) ->
     @_exit_code = status
+    @_exit_signal = signal
     @proc = null
     @pid = -1
     @_maybe_call_callback()
@@ -172,7 +174,7 @@ exports.SpawnEngine = class SpawnEngine extends BaseEngine
 
   #---------------
 
-  _can_finish : () -> (@_err? or @_exit_code?) and @_closed
+  _can_finish : () -> (@_err? or @_exit_code? or @_exit_signal?) and @_closed
 
 
 ##=======================================================================
@@ -187,16 +189,18 @@ exports.ExecEngine = class ExecEngine extends BaseEngine
 
   #---------------
 
-  run : () ->
+  run : (cb) ->
     argv = [@name].concat(@args).join(" ")
     @proc = exec argv, @opts, (args...) => @_got_exec_cb args...
     @stdin.pipe @proc.stdin
+    @pid = @proc.pid
+    cb? null, @
     @
 
   #---------------
 
   _got_exec_cb : (err, stdout, stderr) ->
-    await 
+    await
       @stdout.write stdout, defer()
       @stderr.write stderr, defer()
     @_err = err
@@ -204,13 +208,14 @@ exports.ExecEngine = class ExecEngine extends BaseEngine
     # Please excuse the plentiful hacks here.
     if not @_err?
       @_exit_code = 0
-    else if @_err? 
-      if @_err.code is 127
+    else if @_err?
+      if @_err.signal? then # noop
+      else if @_err.code is 127
         @_err.errno = 'ENOENT'
       else
         @_exit_code = @_err.code
         @_err = null
-        
+
     @_exec_called_back = true
     @_maybe_call_callback()
 
@@ -233,7 +238,7 @@ exports.bufferify = bufferify = (x) ->
 ##=======================================================================
 
 exports.run = run = (inargs, cb) ->
-  {args, stdin, stdout, stderr, quiet, name, eklass, opts, engklass, log, other_fds} = inargs
+  {args, stdin, stdout, stderr, quiet, name, eklass, opts, engklass, log, other_fds, run_cb} = inargs
 
   if (b = bufferify stdin)?
     stdin = new stream.BufferInStream b
@@ -247,12 +252,16 @@ exports.run = run = (inargs, cb) ->
   err = null
   engklass or= (_engine or SpawnEngine)
   eng = new engklass { args, stdin, stdout, stderr, name, opts, log, other_fds}
-  eng.run()
-  await eng.wait defer err, rc
-  if not err? and (rc isnt 0)
+  eng.run run_cb
+  await eng.wait defer err, rc, signal
+  if not err? and rc? and (rc isnt 0)
     eklass or= Error
     err = new eklass "exit code #{rc}"
     err.rc = rc
+  else if not err? and signal?
+    eklass or= Error
+    err = new eklass "exited on signal '#{signal}'"
+    err.signal = signal
   out = if def_out then stdout.data() else null
   cb err, out
 

@@ -10,7 +10,7 @@ posix = not(win32)
 
 #=================================
 
-suite = 
+suite =
 
   #----------------
 
@@ -58,7 +58,7 @@ suite =
     await run { name : "echo", args : [ "hello", "world"] }, defer err, out
     T.no_error err
     T.equal out.toString('utf8'), "hello world#{EOL}", "got the right output"
-    cb()  
+    cb()
 
   #----------------
 
@@ -101,6 +101,16 @@ suite =
     await run { name : "cat", stdin : stream }, defer err, out
     T.no_error err
     T.equal out.toString('utf8'), msg, "the same message came out as went in"
+    cb()
+
+  #----------------
+
+  check_run_cb : (T,cb) ->
+    run_cb = (err, engine) ->
+      process.kill engine.pid
+    await run { name : "sleep", args : [ "100000"], run_cb }, defer err, out
+    T.assert err?, "there was an error because we were killed"
+    T.equal err.signal, "SIGTERM", "the right signal"
     cb()
 
 #=================================
