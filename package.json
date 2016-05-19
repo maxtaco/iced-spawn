@@ -1,6 +1,6 @@
 {
   "name": "iced-spawn",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Platform-independent spawning that works on Window and supports stream",
   "main": "lib/main.js",
   "scripts": {
