@@ -1,3 +1,7 @@
+## v1.0.1 (2019-02-01)
+
+- Use Buffer.from instead of (new Buffer)
+
 ## v1.0.0 (2014-09-21)
 
 Features:

@@ -97,7 +97,7 @@ suite =
 
   check_stdin_2 : (T, cb) ->
     msg = "Now is the time for all good men to come to the aid of the party."
-    stream = new BufferInStream(new Buffer(msg, "utf8"))
+    stream = new BufferInStream(Buffer.from(msg, "utf8"))
     await run { name : "cat", stdin : stream }, defer err, out
     T.no_error err
     T.equal out.toString('utf8'), msg, "the same message came out as went in"

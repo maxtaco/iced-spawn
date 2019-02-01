@@ -231,7 +231,7 @@ exports.Engine = SpawnEngine
 
 exports.bufferify = bufferify = (x) ->
   if not x? then null
-  else if (typeof x is 'string') then new Buffer x, 'utf8'
+  else if (typeof x is 'string') then Buffer.from x, 'utf8'
   else if (Buffer.isBuffer x) then x
   else null
 
