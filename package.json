@@ -28,6 +28,6 @@
     "iced-error": ">=0.0.9",
     "iced-coffee-script": ">=1.7.1-e",
     "iced-test": ">=0.0.15",
-    "minimist": "~0.0.7"
+    "minimist": "~1.2.2"
   }
 }
